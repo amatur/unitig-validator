@@ -11,12 +11,12 @@ do
 
 	#cat kmersascii.txt | cut -f 1 -d"" \; > fwd_kmer.txt
 	cat mer_counts_dumps.fa | cut -f 1 -d" " |  awk '{print $0" 1"}'  > dbg_fwd.txt
+	echo "$(cat dbg_fwd.txt | wc -l)" > n_mer$K 
 
 
-	malfoybcalm  dbg_fwd.txt dbg$K.txt 2
+	malfoybcalm  dbg_fwd.txt dbg$K.txt 8
 	# BCALM/bcalm  mer_counts_dumps.fa dd.unitigs 2
 
-	echo "$(cat dbg$K.txt | wc -l)" > n_kmer 
 	cat dbg$K.txt | tr a A | tr c C | tr g G | tr t T | tr -d \; > unid$K.sset
 	
 done
