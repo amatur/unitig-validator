@@ -4,7 +4,7 @@ gtouch = sys.argv[1]
 k = int(sys.argv[2])
 
 #ref = sys.argv[3]
-colors=["black","aqua","blue","blueviolet","brown","burlywood","cadetblue","chartreuse","chocolate","coral","cornflowerblue","cornsilk","crimson","darkblue","darkorchid","aquamarine","cyan","darkcyan","darkgoldenrod","darkgray","darkgreen","darkkhaki","darkmagenta","darkolivegreen","darkorange","darkred","darksalmon","darkseagreen","darkslateblue","darkslategray","darkturquoise","darkviolet","deeppink","deepskyblue","dimgray","dodgerblue","firebrick","forestgreen","fuchsia","gainsboro","gold","goldenrod","gray","green","greenyellow","hotpink","indianred","indigo","khaki","lavender","lavenderblush","lawngreen","lemonchiffon","lightblue","lightcoral","lightcyan","lightgoldenrodyellow","lightgray","lightgreen","lightgrey","lightpink","lightsalmon","lightseagreen","lightskyblue","lightslategray","lightsteelblue","lightyellow","lime","limegreen","linen","magenta","maroon","mediumaquamarine","mediumblue","mediumorchid","mediumpurple","mediumseagreen","mediumslateblue","mediumspringgreen","mediumturquoise","mediumvioletred","midnightblue","mintcream","mistyrose","moccasin","navajowhite","navy","oldlace","olive","olivedrab","orange","orangered","orchid","palegoldenrod","palegreen","paleturquoise","palevioletred","papayawhip","peachpuff","peru","pink","plum","powderblue","rosybrown","royalblue","saddlebrown","salmon","sandybrown","seagreen","sienna","silver","skyblue","slateblue","slategray","springgreen","steelblue","tan","teal","thistle","tomato","turquoise","violet","wheat","yellow","yellowgreen"]
+colors=["black","white","aqua","blue","blueviolet","brown","burlywood","cadetblue","chartreuse","chocolate","coral","cornflowerblue","cornsilk","crimson","darkblue","darkorchid","aquamarine","cyan","darkcyan","darkgoldenrod","darkgray","darkgreen","darkkhaki","darkmagenta","darkolivegreen","darkorange","darkred","darksalmon","darkseagreen","darkslateblue","darkslategray","darkturquoise","darkviolet","deeppink","deepskyblue","dimgray","dodgerblue","firebrick","forestgreen","fuchsia","gainsboro","gold","goldenrod","gray","green","greenyellow","hotpink","indianred","indigo","khaki","lavender","lavenderblush","lawngreen","lemonchiffon","lightblue","lightcoral","lightcyan","lightgoldenrodyellow","lightgray","lightgrey","lightpink","lightsalmon","lightseagreen","lightskyblue","lightslategray","lightsteelblue","lightyellow","limegreen","linen","magenta","maroon","mediumaquamarine","mediumblue","mediumorchid","mediumpurple","mediumseagreen","mediumslateblue","mediumspringgreen","mediumturquoise","mediumvioletred","midnightblue","mintcream","mistyrose","moccasin","navajowhite","navy","oldlace","olive","olivedrab","orange","orangered","orchid","palegoldenrod","palegreen","paleturquoise","palevioletred","papayawhip","peachpuff","peru","pink","plum","powderblue","rosybrown","royalblue","saddlebrown","salmon","sandybrown","seagreen","sienna","silver","skyblue","slateblue","slategray","springgreen","steelblue","tan","teal","thistle","tomato","turquoise","violet","wheat","yellow","yellowgreen"]
 
 allunitigkmers = dict()
 id_to_seq = dict()
@@ -23,6 +23,8 @@ outdegree=[]
 firsts=[]
 lasts=[]
 
+genomefirst={}
+genomelast={}
 
 
 tosearchinref=[]
@@ -34,6 +36,7 @@ isstart_of_inu={}
 isend_of_inu={}
 
 genomedict={}
+genomes=[]
 vertex_to_genomeid={}
 
 def find_all(a_str, sub):
@@ -45,21 +48,10 @@ def find_all(a_str, sub):
         start += 1 # use start += 1 to find overlapping matches
 # print(list(find_all('ATATAT', 'ATAT')))
 
-#read reference
-# with open(ref, 'r') as reader:
-#     line = reader.readline()
-#     if line=='':
-#         print("done ref reading")
-#
-#     while line != '':  # The EOF char is an empty string
-#         refstr=line.rstrip()
-
 
 genomeid=0
 with open(gtouch, 'r') as reader:
-    #lobal currvindex
     line = reader.readline()
-
     oldinvalid=""
     flag=False
     if line=='':
@@ -76,15 +68,10 @@ with open(gtouch, 'r') as reader:
                 print("start")
             for i in range(len(invaliduni)-k+1):
                 toappend = invaliduni[i:i+k]
-                #toappend_suf=toappend[1:k]
-                #toappend_pre=toappend[0:k-1]
-                #kmomer[toappend_suf] = True
-                #kmomer[toappend_pre] = True
                 if not toappend in allunitigkmers:
                     allunitigkmers[toappend] = currvindex
                     id_to_seq[currvindex] = toappend
                     currvindex += 1
-
 
         oldinvalid=invaliduni
 
@@ -93,9 +80,11 @@ with open(gtouch, 'r') as reader:
         if g not in genomedict:
             genomedict[g]=genomeid
             genomeid +=1
+            genomes.append(g)
 
         firstkmer = invaliduni[0:k]
         lastkmer = invaliduni[len(invaliduni)-k:]
+
 
 
         for i in range(len(g)-k+1):
@@ -104,9 +93,17 @@ with open(gtouch, 'r') as reader:
             if not toappend in allunitigkmers:
                 allunitigkmers[toappend] = currvindex
                 id_to_seq[currvindex] = toappend
+
+                #add first and last kmer of genome
+
+
                 currvindex += 1
 
             vertex_to_genomeid[allunitigkmers[toappend]] = genomeid
+
+        genomefirst[allunitigkmers[g[0:k]]] = genomeid
+        genomelast[allunitigkmers[g[len(g)-k:len(g)]]] = genomeid
+
 
         firsts.append(allunitigkmers[firstkmer])
         lasts.append(allunitigkmers[lastkmer])
@@ -133,16 +130,22 @@ with open(ref, 'r') as reader:
 # print(allunitigkmers)
 
 startofblack=currvindex
+cnt=0
 with open("neikmer.txt", 'r') as reader:
     #lobal currvindex
+
     line = reader.readline()
     while(line!=""):
+
         toappend=line.rstrip()
         if not toappend in allunitigkmers:
+            cnt+=1
+            print(cnt)
             allunitigkmers[toappend] = currvindex
             id_to_seq[currvindex] = toappend
             currvindex += 1
         line = reader.readline()
+
 
 '''
 for kmomer, value in kmomerd.items():
@@ -224,7 +227,7 @@ for key, value in id_to_seq.items():
 for key, value in id_to_seq.items():
     print(key, "in=",indegree[key], ",out=",outdegree[key])
 
-out=open("graph.gv", 'w')
+out=open("oldgraph.gv", 'w')
 
 outvertex=open("vertex.txt", 'w')
 
@@ -259,6 +262,7 @@ for key, value in id_to_seq.items():
 outvertex.close()
 
 
+
 for key, value in gr.items():
     for i in value:
         # out.write("{0} -> {1}[arrowhead=\"none\"]\n".format(key, i))
@@ -266,10 +270,23 @@ for key, value in gr.items():
 
 out.write("}\n")
 
-
-
-
 out.close()
+
+
+## NOW COMPACTED ONE
+
+#DO ADD GENOME FIRST AND LAST
+for key, value in genomefirst.items():
+    if indegree[key]==1:
+        indegree[key] = 10
+    if outdegree[key]==1:
+        outdegree[key] = 10
+
+for key, value in genomelast.items():
+    if indegree[key]==1:
+        indegree[key] = 10
+    if outdegree[key]==1:
+        outdegree[key] = 10
 
 
 copycount={}
@@ -344,7 +361,9 @@ for key, value in id_to_seq.items():
 
 
 shape={}
-def dfs(graph, start, parent_of, visited, group_id, group_assign, group_end,shape):
+group_len={}
+
+def dfs(graph, start, parent_of, visited, group_id, group_assign, group_end,shape, group_len):
     list1 = []
     list2 = []
     #parent_of = {}
@@ -370,6 +389,7 @@ def dfs(graph, start, parent_of, visited, group_id, group_assign, group_end,shap
                 if(isend_of_inu[vertex]):
                     shape[group_id] = "diamond"
 
+                group_len[group_id]=len(list2)
                 return
             else:
                 group_assign[vertex] = group_id
@@ -387,6 +407,8 @@ def dfs(graph, start, parent_of, visited, group_id, group_assign, group_end,shap
     #return parent_of
 
 
+
+
 group_assign={}
 visited=set()
 parent_of={}
@@ -394,7 +416,7 @@ group_id=0
 group_end={}
 for key in unitigstartlist:
     if key not in visited:
-        dfs(gr, key, parent_of, visited, group_id, group_assign, group_end, shape)
+        dfs(gr, key, parent_of, visited, group_id, group_assign, group_end, shape, group_len)
         group_id +=1
         #print(parent_of)
 
@@ -431,20 +453,39 @@ compout=open("graph.gv", 'w')
 compout.write("digraph d {\n")
 compout.write("node [colorscheme=SVG] \n")
 
+
+iscolored={}
 for key, value in compact_gr.items():
     #compout.write("{0} [label=\"{1}\", color=\"black\"]\n".format(key, key))
     #genomeid =
+
+
     endvertex = group_end[key]
+    #copycount[endvertex] = 999999
+
 
     if endvertex not in vertex_to_genomeid:
         cc = 0
     else:
-        cc=vertex_to_genomeid[endvertex] + 1
+        cc=vertex_to_genomeid[endvertex] + 2
 
     shapp="ellipse"
     if group_assign[endvertex] in shape:
         shapp=shape[group_assign[endvertex]]
-    compout.write("{0} [label=\"{1}->{2}\", shape=\"{3}\", penwidth=1, style=filled, fillcolor=\"{4}\"]\n".format(key, endvertex, copycount[endvertex], shapp, colors[cc]))
+
+
+    if endvertex in genomefirst:
+        compout.write("{0} [label=\"{1} ({2}){5}\", shape=\"{3}\", penwidth=5, style=\"dashed\", color=\"{4}\"]\n".format(key, endvertex, copycount[endvertex], shapp, colors[genomefirst[endvertex]+2],group_len[key]))
+        iscolored[endvertex] = True
+    if endvertex in genomelast:
+        compout.write("{0} [label=\"{1} ({2}){5}\", shape=\"{3}\", penwidth=5, style=\"dotted\", color=\"{4}\"]\n".format(key, endvertex, copycount[endvertex], shapp, colors[genomelast[endvertex]+2],group_len[key]))
+        iscolored[endvertex] = True
+    if endvertex in genomefirst and endvertex in genomelast and len(genomes[genomefirst[endvertex]])!=k:
+        compout.write("{0} [label=\"{1} ({2}){5}\", shape=\"{3}\", penwidth=5, style=\"diagonals\", color=\"{4}\"]\n".format(key, endvertex, copycount[endvertex], shapp, colors[0],group_len[key]))
+        iscolored[endvertex] = True
+    if endvertex not in genomefirst and endvertex not in genomelast:
+        compout.write("{0} [label=\"{1} ({2}){5}\", shape=\"{3}\", penwidth=5, style=solid, color=\"{4}\"]\n".format(key, endvertex, copycount[endvertex], shapp, colors[cc], group_len[key]))
+        iscolored[endvertex] = True
 
 for key, value in compact_gr.items():
     for i in value:
@@ -534,7 +575,8 @@ with open("gtouch", 'r') as reader:
             p3=g[l_start+k:]
         else:
             p1=g
-        out.write("<span style='color:{6};'>{0}</span><span style='color:red;'>{1}</span><span style='color:purple;'>{2}</span><span style='color:{6};'>{3}</span><span style='color:blue;'>{4}</span><span style='color:{6};'>{5}</span><br>".format(p1, redtext, purpletext, p2, bluetext, p3, colors[vertex_to_genomeid[allunitigkmers[lastkmer]]]))
+        out.write("<span style='color:{6};'>{0}</span><span style='color:red;'>{1}</span><span style='color:purple;'>{2}</span><span style='color:{6};'>{3}</span><span style='color:blue;'>{4}</span><span style='color:{6};'>{5}</span><br>".format(p1, redtext, purpletext, p2, bluetext, p3, "black"))
+        #colors[vertex_to_genomeid[allunitigkmers[lastkmer]]]
 #0+1+        2+      3   4       5
 #p1+redtext+purpletext+p2+bluetext+p3
 
