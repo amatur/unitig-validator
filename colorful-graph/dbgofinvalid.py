@@ -2,8 +2,16 @@ import sys
 import os
 
 # need 2 file: mer_counts.jf and gtouch (also k)
-GTOUCH_FILE = sys.argv[1]
-k = int(sys.argv[2])
+k = int(sys.argv[1])
+GTOUCH_FILE = sys.argv[2]
+# INVALID_UNITIG_FILE=""
+# GENOME_FILE=""
+# TOUCHED_GENOME_ID_FILE=""
+# if(len(sys.argv)>3):
+#     TOUCHED_GENOME_ID_FILE = GTOUCH_FILE
+#     INVALID_UNITIG_FILE = sys.argv[3]
+#     GENOME_FILE = sys.argv[4]
+
 # ref = sys.argv[3]
 colors = ["black", "gray", "aqua", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate",
           "coral", "cornflowerblue", "cornsilk", "crimson", "darkblue", "darkorchid", "aquamarine", "cyan", "darkcyan",
@@ -38,7 +46,7 @@ def read_gtouch(GTOUCH_FILE, kmer_to_id, id_to_kmer, genome_to_gid, genomes, gen
             linesplit = line.split()
             inv_uni = linesplit[0].rstrip()
             if (inv_uni != old_inv_uni):
-                unitigs.add(inv_uni)
+                unitigs.append(inv_uni)
 
                 flag = True
             if (flag):
@@ -84,6 +92,72 @@ def read_gtouch(GTOUCH_FILE, kmer_to_id, id_to_kmer, genome_to_gid, genomes, gen
         ufirsts.add(kmer_to_id[u[0:k]])
         ulasts.add(kmer_to_id[u[len(u) - k:]])
     return curr_id
+
+
+
+# def read_gtouch_idversion(INVALID_UNITIG_FILE, GENOME_FILE, TOUCHED_GENOME_ID_FILE, kmer_to_id, id_to_kmer, genome_to_gid, genomes, genomefirst, genomelast, firsts, lasts, ufirsts, ulasts, unitigs):
+#     #feed invalid unitigs
+#     curr_id=0
+#     genomeid_reduced=0
+#     genomeid=-1
+#
+#     reader_id=open(TOUCHED_GENOME_ID_FILE, 'r')
+#
+#     with open(GENOME_FILE, 'r') as reader:
+#         line = reader.readline()
+#         id_of_touched_g = int(reader_id.readline().rstrip())
+#         while line != '':
+#             g = line.rstrip()
+#             if(g[0]!='>'):
+#                 genomeid+=1
+#                 if(id_of_touched_g == genomeid):
+#                     if g not in genome_to_gid:
+#                         genome_to_gid[g] = genomeid_reduced
+#                         genomes.append(g)
+#                     for i in range(len(g) - k + 1):
+#                         kmer_to_append = g[i:i + k]
+#                         if not kmer_to_append in kmer_to_id:
+#                             kmer_to_id[kmer_to_append] = curr_id
+#                             id_to_kmer[curr_id] = kmer_to_append
+#                             curr_id += 1
+#
+#                         if (kmer_to_id[kmer_to_append] not in vertex_to_genomeid):
+#                             vertex_to_genomeid[kmer_to_id[kmer_to_append]] = set()
+#                         vertex_to_genomeid[kmer_to_id[kmer_to_append]].add(genomeid_reduced)
+#
+#                     genomefirst[kmer_to_id[g[0:k]]] = genomeid_reduced
+#                     genomelast[kmer_to_id[g[len(g) - k:len(g)]]] = genomeid_reduced
+#
+#
+#                     genomeid_reduced+=1
+#
+#                     id_of_touched_g = (reader_id.readline().rstrip())
+#                     if(id_of_touched_g==''):
+#                         break
+#             line = reader.readline()
+#     reader_id.close()
+#     with open(INVALID_UNITIG_FILE, 'r') as reader:
+#         line = reader.readline()
+#         while line != '':
+#             u = line.rstrip()
+#             if (u[0] != '>'):
+#                 unitigs.append(u)
+#                 for i in range(len(u) - k + 1):
+#                     kmer_to_append = u[i:i + k]
+#                     if not kmer_to_append in kmer_to_id:
+#                         kmer_to_id[kmer_to_append] = curr_id
+#                         id_to_kmer[curr_id] = kmer_to_append
+#                         curr_id += 1
+#                 firstkmer = u[0:k]
+#                 lastkmer = u[len(u) - k:]
+#                 firsts.append(kmer_to_id[firstkmer])
+#                 lasts.append(kmer_to_id[lastkmer])
+#                 ufirsts.add(kmer_to_id[u[0:k]])
+#                 ulasts.add(kmer_to_id[u[len(u) - k:]])
+#
+#             line = reader.readline()
+#     return curr_id
+
 
 
 def read_neikmer(neikmer, kmer_to_id, id_to_kmer, curr_id):
@@ -172,6 +246,7 @@ def read_copycount(copycount_file, copycount):
             copycount[counter] = int(line)
             counter += 1
             line = reader.readline()
+
 
 
 def out_non_compacted_dbg_ve(id_to_kmer, dbg, VERTEX_FILE, EDGE_FILE):
@@ -428,7 +503,7 @@ def print_compact_graph(cc_obj, copycount):
             if (len(vertex_to_genomeid[endvertex]) > 1):
                 cc = 1
             else:
-                cc = arb_gen_id + 2
+                cc = arb_gen_id % (len(colors)-2) + 2
             # cc=vertex_to_genomeid[endvertex] + 2
 
         shapp = "ellipse"
@@ -444,7 +519,7 @@ def print_compact_graph(cc_obj, copycount):
                                                                                                                     shapp,
                                                                                                                     colors[
                                                                                                                         genomefirst[
-                                                                                                                            endvertex] + 2],
+                                                                                                                            endvertex]%(len(colors)-2) + 2],
                                                                                                                     group_len[
                                                                                                                         key]))
             iscolored[endvertex] = True
@@ -457,7 +532,7 @@ def print_compact_graph(cc_obj, copycount):
                                                                                                                     shapp,
                                                                                                                     colors[
                                                                                                                         genomelast[
-                                                                                                                            endvertex] + 2],
+                                                                                                                            endvertex]%(len(colors)-2) + 2],
                                                                                                                     group_len[
                                                                                                                         key]))
             iscolored[endvertex] = True
@@ -487,14 +562,14 @@ def print_compact_graph(cc_obj, copycount):
     compout.close()
 
 
-def print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print):
+def print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print, GRAPH_MISJOIN_FILE):
     compact_gr = cc_obj.compact_gr
     group_end = cc_obj.group_end
     group_assign = cc_obj.group_assign
     group_len = cc_obj.group_len
     shape = cc_obj.shape
 
-    compout = open("graph_misjoin.gv", 'w')
+    compout = open(GRAPH_MISJOIN_FILE, 'w')
     compout.write("digraph d {\n")
     compout.write("node [colorscheme=SVG] \n")
 
@@ -511,7 +586,7 @@ def print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print):
             if (len(vertex_to_genomeid[endvertex]) > 1):
                 cc = 1
             else:
-                cc = arb_gen_id + 2
+                cc = (arb_gen_id % (len(colors)-2)) + 2
             # cc=vertex_to_genomeid[endvertex] + 2
 
         shapp = "ellipse"
@@ -527,7 +602,7 @@ def print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print):
                                                                                                                     shapp,
                                                                                                                     colors[
                                                                                                                         genomefirst[
-                                                                                                                            endvertex] + 2],
+                                                                                                                            endvertex] %(len(colors)-2) + 2],
                                                                                                                     group_len[
                                                                                                                         key]))
             iscolored[endvertex] = True
@@ -540,7 +615,7 @@ def print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print):
                                                                                                                     shapp,
                                                                                                                     colors[
                                                                                                                         genomelast[
-                                                                                                                            endvertex] + 2],
+                                                                                                                            endvertex] %(len(colors)-2) + 2],
                                                                                                                     group_len[
                                                                                                                         key]))
             iscolored[endvertex] = True
@@ -705,9 +780,6 @@ class GraphSCC:
         return cc
 
 def get_vertices_in_misjoin(dbg,unitigs,cc_obj,kmer_to_id,issampled):
-    iprimes=dict() #start of some genome
-    jprimes=dict() #end of some genome
-
     revdbg=get_reverse_gr(dbg)
     list_of_unitig_firsts=[]
     for u in unitigs:
@@ -720,7 +792,8 @@ def get_vertices_in_misjoin(dbg,unitigs,cc_obj,kmer_to_id,issampled):
         # if not (copycount[kmer_to_id[u0]]==1 and copycount[kmer_to_id[u0]]==1):
         #     list_of_unitig_firsts.append(cc_obj.group_assign[kmer_to_id[u0]])
 
-
+        iprimes = dict()  # start of some genome
+        jprimes = dict()  # end of some genome
         for i in range(len(u) - k + 1):
             kmer=u[i:i + k]
             kmerid=kmer_to_id[kmer]
@@ -748,44 +821,168 @@ def get_vertices_in_misjoin(dbg,unitigs,cc_obj,kmer_to_id,issampled):
                     for outneigh in dbg[kmer_to_id[kmer]]:
                         if (not issampled[outneigh]):
                             if (copycount[outneigh] == 1):
+                                if(ui!=-1):
+                                    uj = i
+
+            # if(ind==2 and outd==2):
+            #     print("Error: ")
+                #exit(1)
+
+            if(i>=ui and ui!=-1):
+                if(kmerid in genomefirst):
+                    if i not in iprimes:
+                        iprimes[i]=[]
+                    iprimes[i].append(genomefirst[kmerid])
+                if (kmerid in genomelast):
+                    if i not in jprimes:
+                        jprimes[i]=[]
+                    jprimes[i].append(genomelast[kmerid])
+
+            check=False
+            if(ui!=-1 and uj!=-1):
+                for iprime, gi in iprimes.items():
+                    for jprime, gj in jprimes.items():
+                        # gi=iprimes[iprime]
+                        # gj=jprimes[jprime]
+                        check1 = (iprime-1 <= jprime)
+                        check2 = (gi!=gj)
+                        check = (check1 and check2)
+                        if(check):
+                            break
+                    if (check):
+                        break
+                if(check):
+                    assert(jprime<=uj)
+                    assert (iprime <= uj)
+                    list_of_unitig_firsts.append(cc_obj.group_assign[kmer_to_id[u[ui:ui + k]]])
+                    break
+                else:
+                    ui=-1
+                    uj=-1
+
+
+
+    print("Total true invalid:", len(unitigs))
+    print("True invalid unitig containing misjoin", len(list_of_unitig_firsts))
+    print("True invalid unitig containing NO misjoin", len(unitigs)-len(list_of_unitig_firsts))
+    scc=GraphSCC(cc_obj.compact_gr)
+    vertices_from_misjoin=set(scc.connectedComponents(list_of_unitig_firsts))
+    # vertices_to_print=set()
+    # for i in range(len(dbg)):
+    #     if i not in vertices_from_misjoin:
+    #         vertices_to_print.add(i)
+    return vertices_from_misjoin
+
+
+
+def get_vertices_in_misjoin_plus(dbg,unitigs,cc_obj,kmer_to_id,issampled):
+    revdbg=get_reverse_gr(dbg)
+    list_of_unitig_firsts=[]
+
+    for u in unitigs:
+
+        setkmerid = -1
+        ui = -1
+        uj = -1
+
+        u0 = u[0:k]
+        un = u[len(u) - k:]
+
+        # if not (copycount[kmer_to_id[u0]]==1 and copycount[kmer_to_id[u0]]==1):
+        #     list_of_unitig_firsts.append(cc_obj.group_assign[kmer_to_id[u0]])
+
+        iprimes = dict()  # start of some genome
+        jprimes = dict()  # end of some genome
+        for i in range(len(u) - k + 1):
+            kmer=u[i:i + k]
+            kmerid=kmer_to_id[kmer]
+            ind=len(revdbg[kmer_to_id[kmer]])
+            outd=len(dbg[kmer_to_id[kmer]])
+
+            #if (ind == 2 and outd == 1):#
+            if (outd == 1):  #
+                if (copycount[kmerid] >= 2): #2
+                    for inneigh in revdbg[kmerid]:
+                        if (not issampled[inneigh]):
+                            #if (copycount[inneigh] == copycount[kmerid]-1): #1
+                            ui = i
+                            setkmerid=copycount[kmerid]
+
+
+            if (ind == 1 and outd == 1):
+                if (copycount[kmer_to_id[kmer]]!=setkmerid): #2
+                    ui=-1
+
+            # if(ind==2):
+            #     if (copycount[kmerid]!=2):
+            #         ui=-1
+            #         continue
+
+            if (outd>=2 and ind == 1):
+                if (copycount[kmerid]==setkmerid): #2
+                    for outneigh in dbg[kmer_to_id[kmer]]:
+                        if (not issampled[outneigh]):
+                            #if (copycount[outneigh] == setkmerid-1): #1
+                            if(ui!=-1):
                                 uj = i
 
             # if(ind==2 and outd==2):
             #     print("Error: ")
                 #exit(1)
 
-            # if(i>=ui):
-            #     if(kmerid in genomefirst):
-            #         iprimes[i]=genomefirst[kmerid]
-            #     if (kmerid in genomelast):
-            #         jprimes[i] = genomelast[kmerid]
-            #
+            if(i>=ui and ui!=-1):
+                if(kmerid in genomefirst):
+                    if i not in iprimes:
+                        iprimes[i]=[]
+                    iprimes[i].append(genomefirst[kmerid])
+                if (kmerid in genomelast):
+                    if i not in jprimes:
+                        jprimes[i]=[]
+                    jprimes[i].append(genomelast[kmerid])
+
+            check=False
             if(ui!=-1 and uj!=-1):
-                list_of_unitig_firsts.append(cc_obj.group_assign[kmer_to_id[u[ui:ui + k]]])
-                break
-            #     for iprime in iprimes.items():
-            #         for jprime in jprimes.items():
-            #             check1=
+                for iprime, gi in iprimes.items():
+                    for jprime, gj in jprimes.items():
+                        # gi=iprimes[iprime]
+                        # gj=jprimes[jprime]
+                        check1 = (iprime-1 <= jprime)
+                        check2 = (gi!=gj)
+                        check = (check1 and check2)
+                        if(check):
+                            break
+                    if (check):
+                        break
+                if(check):
+                    assert(jprime<=uj)
+                    assert (iprime <= uj)
+                    list_of_unitig_firsts.append(cc_obj.group_assign[kmer_to_id[u[ui:ui + k]]])
+                    break
+                else:
+                    ui=-1
+                    uj=-1
 
-    print(len(unitigs))
-    print(len(list_of_unitig_firsts))
+
+
+    print("Total true invalid:", len(unitigs))
+    print("True invalid unitig containing misjoin", len(list_of_unitig_firsts))
+    print("True invalid unitig containing NO misjoin", len(unitigs)-len(list_of_unitig_firsts))
     scc=GraphSCC(cc_obj.compact_gr)
-    vertices_to_not_print=set(scc.connectedComponents(list_of_unitig_firsts))
-    vertices_to_print=set()
-    for i in range(len(dbg)):
-        if i not in vertices_to_not_print:
-            vertices_to_print.add(i)
-    return vertices_to_not_print
-
+    vertices_from_misjoin=set(scc.connectedComponents(list_of_unitig_firsts))
+    # vertices_to_print=set()
+    # for i in range(len(dbg)):
+    #     if i not in vertices_from_misjoin:
+    #         vertices_to_print.add(i)
+    return vertices_from_misjoin
 
 
 
 
 
 def write_copycount_jf_to_file(vertex_f, copycount_f):
-    # sset_to_fa.sh ref.sset > ref.fa
-    # jellyfish count -m $K -s 100M -t 10 ref.fa
-    os.system("jellyfish query mer_counts.jf $(cat {0} | cut -f2 -d\" \") | cut -f2 -d \" \" > {1}".format(vertex_f, copycount_f))
+    #sset_to_fa.sh ref.sset > ref.fa
+    #jellyfish count -m $K -s 100M -t 10 ref.fa
+    os.system("cat {0} | cut -f2 -d\" \" | jellyfish query -i mer_counts.jf  | cut -f2 -d \" \" > {1}".format(vertex_f, copycount_f))
 
 
 def write_one_hop_from_iu(unitigs, k, outfile):
@@ -814,7 +1011,9 @@ def write_neikmer_jf_to_file(NEIKMER_FILE):
 def dot_vis():
     #python dbgofinvalid.py gtouch 21;
     os.system("neato -Tsvg graph_misjoin.gv -o dbg_mis.svg")
-
+    os.system("neato -Tsvg graph_no_misjoin.gv -o dbg_nomis.svg")
+    os.system("neato -Tsvg graph.gv -o dbg.svg")
+    os.system("neato -Tsvg oldgraph.gv -o olddbg.svg")
 #    os.system("neato -Tsvg graph.gv -o dbg.svg; neato -Tsvg oldgraph.gv -o olddbg.svg; neato -Tsvg graph_misjoin.gv -o dbg_mis.svg")
 #   os.system("neato -Tsvg graph.gv -o dbg.svg; neato -Tsvg oldgraph.gv -o olddbg.svg")
 
@@ -846,7 +1045,7 @@ isend_of_inu = {}
 
 copycount = {}
 
-unitigs=set()
+unitigs=[]
 
 NEIKMER_FILE="neikmer.txt"
 VERTEX_FILE="vertices.txt"
@@ -872,8 +1071,15 @@ out_non_compacted_dbg(id_to_kmer, dbg, startofblack, copycount, OLDGRAPH_FILE)
 cc_obj=get_compact_graph(indegree, outdegree, genomefirst, genomelast, id_to_kmer, startofblack, firsts, lasts, ufirsts, ulasts, issampled, isstart_of_inu, isend_of_inu)
 print_compact_graph(cc_obj, copycount)
 write_html(GTOUCH_FILE, HTML_FILE)
-vertices_to_print=get_vertices_in_misjoin(dbg,unitigs,cc_obj,kmer_to_id,issampled)
-print_compact_graph_misjoin(cc_obj, copycount, vertices_to_print)
+
+vertices_from_misjoin=get_vertices_in_misjoin_plus(dbg,unitigs,cc_obj,kmer_to_id,issampled)
+vertices_not_in_misjoin=set()
+for i in range(len(dbg)):
+    if i not in vertices_from_misjoin:
+        vertices_not_in_misjoin.add(i)
+
+print_compact_graph_misjoin(cc_obj, copycount, vertices_from_misjoin, "graph_misjoin.gv")
+print_compact_graph_misjoin(cc_obj, copycount, vertices_not_in_misjoin, "graph_no_misjoin.gv")
 dot_vis()
 
 
